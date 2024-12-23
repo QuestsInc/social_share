@@ -267,15 +267,22 @@
         result([NSNumber numberWithBool:YES]);
     } else if ([@"shareTelegram" isEqualToString:call.method]) {
         NSString *content = call.arguments[@"content"];
-        NSString * urlScheme = [NSString stringWithFormat:@"tg://msg?text=%@",content];
-        NSURL * telegramURL = [NSURL URLWithString:[urlScheme stringByAddingPercentEscapesUsingEncoding:NSUTF8StringEncoding]];
-        if ([[UIApplication sharedApplication] canOpenURL: telegramURL]) {
-            [[UIApplication sharedApplication] openURL: telegramURL];
-            result(@"sharing");
+
+        NSString *urlTextEscaped = [content stringByAddingPercentEncodingWithAllowedCharacters:[NSCharacterSet URLQueryAllowedCharacterSet]];
+
+        NSString *urlScheme = [NSString stringWithFormat:@"tg://msg?text=%@", urlTextEscaped];
+        NSURL *telegramURL = [NSURL URLWithString:urlScheme];
+
+        if ([[UIApplication sharedApplication] canOpenURL:telegramURL]) {
+            if (@available(iOS 10.0, *)) {
+                [[UIApplication sharedApplication] openURL:telegramURL options:@{} completionHandler:nil];
+                result(@"sharing");
+            } else {
+                result(@"this only supports iOS 10+");
+            }
         } else {
-            result(@"cannot open Telegram");
+            result(@"cannot open Telegram app");
         }
-        result([NSNumber numberWithBool:YES]);
     } else if ([@"shareOptions" isEqualToString:call.method]) {
         NSString *content = call.arguments[@"content"];
         NSString *image = call.arguments[@"image"];
